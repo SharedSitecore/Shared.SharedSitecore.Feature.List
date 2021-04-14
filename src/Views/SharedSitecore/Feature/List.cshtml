@@ -1,0 +1,91 @@
+@using Sitecore.Mvc.Presentation
+@using Sitecore.Mvc
+@using Sitecore.Data.Items
+@model RenderingModel
+@functions
+{
+    private string Show(Item item = null, string linkFormat = null, string target = "", int depth = 0)
+    {
+        var results = string.Empty;
+        var items = new List<Item>();
+
+        if (item == null) { item = Model.Item; }
+        results += "<!-- item: " + (item != null && !string.IsNullOrEmpty(item.ID.ToString()) != null ? item.ID.ToString() : "") + " -->";
+        results += "<!-- item.TemplateId: " + (item != null ? item.TemplateID.ToString() : "") + " -->";
+
+        var source = RenderingContext.CurrentOrNull.Rendering.RenderingItem.DataSource;
+        results += "<!-- source: " + source + " -->";
+
+        if (source.StartsWith("script:") || (item != null && item.TemplateID.ToString() == "{DD22F1B3-BD87-4DB2-9E7D-F7A496888D43}"))
+        {
+            if (string.IsNullOrEmpty(source) && item.TemplateID.ToString() == "{DD22F1B3-BD87-4DB2-9E7D-F7A496888D43}") { source = item.ID.ToString(); }
+            results += "<!-- Script detected. Running: " + source + " -->";
+            items = SharedSitecore.Extensions.ExecuteScript.Execute<List<Item>>(source);
+            results += "<!-- items: " + (items != null ? items.Count().ToString() : "0") + "-->";
+        }
+        else
+        {
+            if (!string.IsNullOrEmpty(source))
+            {
+                var sourceItem = Sitecore.Context.Database.GetItem(RenderingContext.CurrentOrNull.Rendering.RenderingItem.DataSource);
+                if (sourceItem != null && (item == null || sourceItem.ID != item.ID)) { item = sourceItem; }
+            }
+        }
+        if (item == null && items == null)
+        {
+            return "item(s) is null!";
+        }
+
+        //results += "<!--" + item.ID + " - " + depth + "-->";
+
+        if ((items == null || items.Count() == 0) && item != null && item.Children != null)
+        {
+            items = item.Children.Where(x => !x.Name.StartsWith("__")).ToList();
+        }
+
+        if (items != null && items.Count() > 0)
+        {
+            results += "<!--" + items.Count().ToString() + "-->";
+            results += "<ul>";
+            foreach (Item link in items)
+            {
+                results += "<!-- processing item: " + link.ID.ToString() + "-->";
+                var title = @Html.Sitecore().Field("Title", link).ToString();
+                if (string.IsNullOrEmpty(title)) { title = link.DisplayName; }
+                var url = @Sitecore.Links.LinkManager.GetItemUrl(link);
+                if (!string.IsNullOrEmpty(linkFormat))
+                {
+                    url = linkFormat.Replace("{id}", link.ID.ToString());
+                }
+                results += "<li><a href=" + url + (!string.IsNullOrEmpty(target) ? " target=\"" + target + "\"" : "") + ">" + title + "</a></li>";
+                if (link.TemplateID.ToString() != "{6ABEE1F2-4AB4-47F0-AD8B-BDB36F37F64C}" && (depth == -1 || depth > 0)) results += Show(link, linkFormat, target, depth == 0 ? depth : depth - 1);
+                //results += "<!-- link: " + link.Name + ".ID=" + link.ID + "-->";
+            }
+            results += "</ul>";
+        }
+        return results;
+    }
+}
+@{
+    var title = string.Empty;
+    var link = string.Empty;
+    var target = string.Empty;
+    var depth = 0;
+    var rc = Sitecore.Mvc.Presentation.RenderingContext.CurrentOrNull;
+    if (rc != null)
+    {
+        var parms = rc.Rendering.Parameters;
+        if (parms["Depth"] != null) { depth = parms["Depth"] == "*" ? 0 : Convert.ToInt32(parms["Depth"]); }
+        if (parms["Link"] != null) { link = parms["Link"]; }
+        if (parms["Title"] != null) { title = parms["Title"]; }
+        if (parms["Target"] != null) { target = parms["Target"]; }
+    }
+    if (string.IsNullOrEmpty(title) && Model.Item != null && Model.Item.Fields["title"] != null) { title = Model.Item.Fields["title"].Value; }
+    if (string.IsNullOrEmpty(title) && Model.Item != null) { title = !string.IsNullOrEmpty(Model.Item.DisplayName) ? Model.Item.DisplayName : Model.Item.Name; }
+}
+<div class="container">
+    <h4>@Html.Raw(title)</h4>
+    @Html.Raw(Show(null, link, target, depth))
+    <!-- Model.Item.Name: @Html.Raw(Model.Item != null ? Model.Item.Name : "null")-->
+    <!-- Model.Item.ID: @Html.Raw(Model.Item != null ? Model.Item.ID.ToString() : "null")-->
+</div>
