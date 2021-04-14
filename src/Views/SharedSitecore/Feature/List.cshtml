@@ -70,6 +70,8 @@
     var title = string.Empty;
     var link = string.Empty;
     var target = string.Empty;
+    var cssClass = string.Empty;
+    var titleCssClass = string.Empty;
     var depth = 0;
     var rc = Sitecore.Mvc.Presentation.RenderingContext.CurrentOrNull;
     if (rc != null)
@@ -79,12 +81,18 @@
         if (parms["Link"] != null) { link = parms["Link"]; }
         if (parms["Title"] != null) { title = parms["Title"]; }
         if (parms["Target"] != null) { target = parms["Target"]; }
+        if (parms["CssClass"] != null) { cssClass = parms["CssClass"]; }
+        if (parms["TitleCssClass"] != null) { titleCssClass = parms["TitleCssClass"]; }
     }
     if (string.IsNullOrEmpty(title) && Model.Item != null && Model.Item.Fields["title"] != null) { title = Model.Item.Fields["title"].Value; }
     if (string.IsNullOrEmpty(title) && Model.Item != null) { title = !string.IsNullOrEmpty(Model.Item.DisplayName) ? Model.Item.DisplayName : Model.Item.Name; }
+    if (string.IsNullOrEmpty(cssClass)) { cssClass = "container"; }
+    if (string.IsNullOrEmpty(titleCssClass)) { titleCssClass = ""; }
+
 }
-<div class="container">
-    <h4>@Html.Raw(title)</h4>
+<div class="@cssClass">
+    <h5 class="@titleClass">
+        @Html.Raw(title)</h4>
     @Html.Raw(Show(null, link, target, depth))
     <!-- Model.Item.Name: @Html.Raw(Model.Item != null ? Model.Item.Name : "null")-->
     <!-- Model.Item.ID: @Html.Raw(Model.Item != null ? Model.Item.ID.ToString() : "null")-->
