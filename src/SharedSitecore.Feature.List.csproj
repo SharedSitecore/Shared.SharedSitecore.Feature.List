@@ -28,6 +28,12 @@
 	  <PackageReference Include="Sitecore.Kernel" Version="9.3.0" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <Reference Include="SharedSitecore.Extensions.ExecuteScript">
+	    <HintPath>..\..\..\Extensions\SharedSitecore.Extensions.ExecuteScript\src\bin\Debug\net471\SharedSitecore.Extensions.ExecuteScript.dll</HintPath>
+	  </Reference>
+	</ItemGroup>
+
 	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
 		<Exec Command="IF &quot;$(ConfigurationName)&quot; == &quot;Debug&quot; (Powershell.exe -ExecutionPolicy Unrestricted -file D:\repos\SharedSitecore\SharedSitecore.DeploySitecoreProject\Deploy-SitecoreProject.ps1 $(ProjectDir))" />
 	</Target>
